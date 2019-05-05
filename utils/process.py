@@ -53,6 +53,13 @@ def load_data(dataset_str): # {'pubmed', 'citeseer', 'cora'}
             else:
                 objects.append(pkl.load(f))
 
+    # x: [140, 1433], masked features
+    # y: [140, 7], masked labels
+    # tx: [1000, 1433], trained features
+    # ty: [1000, 7], trained labels
+    # allx: [1708, 1433], validated features
+    # ally: [1708, 7], validated labels
+    # graph: graph data structure
     x, y, tx, ty, allx, ally, graph = tuple(objects)
     test_idx_reorder = parse_index_file("data/ind.{}.test.index".format(dataset_str))
     test_idx_range = np.sort(test_idx_reorder)
@@ -68,30 +75,27 @@ def load_data(dataset_str): # {'pubmed', 'citeseer', 'cora'}
         ty_extended[test_idx_range-min(test_idx_range), :] = ty
         ty = ty_extended
 
-    features = sp.vstack((allx, tx)).tolil()
+    features = sp.vstack((allx, tx)).tolil() # [2708, 1433], all features
     features[test_idx_reorder, :] = features[test_idx_range, :]
-    adj = nx.adjacency_matrix(nx.from_dict_of_lists(graph))
+    adj = nx.adjacency_matrix(nx.from_dict_of_lists(graph)) # [2708, 2708], adjacent matrix
 
-    labels = np.vstack((ally, ty))
+    labels = np.vstack((ally, ty)) # [2708, 7], all labels
     labels[test_idx_reorder, :] = labels[test_idx_range, :]
 
     idx_test = test_idx_range.tolist()
-    idx_train = range(len(y))
-    idx_val = range(len(y), len(y)+500)
+    idx_train = range(len(y)) # 140
+    idx_val = range(len(y), len(y)+500) # 500
 
-    train_mask = sample_mask(idx_train, labels.shape[0])
-    val_mask = sample_mask(idx_val, labels.shape[0])
-    test_mask = sample_mask(idx_test, labels.shape[0])
+    train_mask = sample_mask(idx_train, labels.shape[0]) # from 0 to 139, set to 1
+    val_mask = sample_mask(idx_val, labels.shape[0]) # from 140 to 639, set to 1
+    test_mask = sample_mask(idx_test, labels.shape[0]) # input from ind.cora.test.index
 
-    y_train = np.zeros(labels.shape)
-    y_val = np.zeros(labels.shape)
-    y_test = np.zeros(labels.shape)
+    y_train = np.zeros(labels.shape) # [2708, 7], masked by idx_train, just use 140(0~139) elements
+    y_val = np.zeros(labels.shape) # [2708, 7], masked by idx_val, just use 500(140~630) elements
+    y_test = np.zeros(labels.shape) # [2708, 7], masked by idx_test, just use 1000 elements
     y_train[train_mask, :] = labels[train_mask, :]
     y_val[val_mask, :] = labels[val_mask, :]
     y_test[test_mask, :] = labels[test_mask, :]
-
-    print(adj.shape)
-    print(features.shape)
 
     return adj, features, y_train, y_val, y_test, train_mask, val_mask, test_mask
 
@@ -158,7 +162,7 @@ def preprocess_features(features):
     r_inv = np.power(rowsum, -1).flatten()
     r_inv[np.isinf(r_inv)] = 0.
     r_mat_inv = sp.diags(r_inv)
-    features = r_mat_inv.dot(features)
+    features = r_mat_inv.dot(features) # D^{-1} \times A
     return features.todense(), sparse_to_tuple(features)
 
 def normalize_adj(adj):

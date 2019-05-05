@@ -55,10 +55,10 @@ biases = process.adj_to_bias(adj, [nb_nodes], nhood=1)
 
 with tf.Graph().as_default():
     with tf.name_scope('input'):
-        ftr_in = tf.placeholder(dtype=tf.float32, shape=(batch_size, nb_nodes, ft_size))
-        bias_in = tf.placeholder(dtype=tf.float32, shape=(batch_size, nb_nodes, nb_nodes))
-        lbl_in = tf.placeholder(dtype=tf.int32, shape=(batch_size, nb_nodes, nb_classes))
-        msk_in = tf.placeholder(dtype=tf.int32, shape=(batch_size, nb_nodes))
+        ftr_in = tf.placeholder(dtype=tf.float32, shape=(batch_size, nb_nodes, ft_size)) # [1, 2708, 1433]
+        bias_in = tf.placeholder(dtype=tf.float32, shape=(batch_size, nb_nodes, nb_nodes)) # [1, 2708, 2708]
+        lbl_in = tf.placeholder(dtype=tf.int32, shape=(batch_size, nb_nodes, nb_classes)) # [1, 2708, 7]
+        msk_in = tf.placeholder(dtype=tf.int32, shape=(batch_size, nb_nodes)) # [1, 2708]
         attn_drop = tf.placeholder(dtype=tf.float32, shape=())
         ffd_drop = tf.placeholder(dtype=tf.float32, shape=())
         is_train = tf.placeholder(dtype=tf.bool, shape=())
